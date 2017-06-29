@@ -31,11 +31,11 @@ class BaseClient(object):
 
     def crawlTheSite(self):
 
-        self.downloadSite()
-
-        self.removeUselessText()
-
-        self.generateInfoPlist()
+        # # self.downloadSite()
+        # #
+        # # self.removeUselessText()
+        #
+        # self.generateInfoPlist()
 
         self.generateDB()
 
@@ -63,28 +63,51 @@ class BaseClient(object):
         cur.execute('CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);')
         cur.execute('CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);')
 
-        page = open(os.path.join(self.documentsPath, 'index.html')).read()
+        fileName = 'index.html'
+        page = open(os.path.join(self.documentsPath, fileName)).read()
 
         # Guides
-        guidesRegular = r'<a class="reference internal" href="([^#]*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>'
-        self.writeItemToDB(cur, page, guidesRegular, 'Guides')
+        guidesPattern = re.compile(r'<a class="reference internal" href="([^#]*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>')
+        self.writeItemToDB(cur, page, guidesPattern, 'Guides', fileName)
 
         # category
-        categoryRegualar = r'<a class="reference internal" href="(.*?#.*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>'
-        self.writeItemToDB(cur, page, categoryRegualar, 'Category')
+        categoryPattern = re.compile(r'<a class="reference internal" href="(.*?#.*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>')
+        self.writeItemToDB(cur, page, categoryPattern, 'Category', fileName)
+
+        fileName = 'api.html'
+
+        apiPage = open(os.path.join(self.documentsPath, fileName)).read()
+        classPattern = re.compile(r'class="class">\n.*?id="(.*?)">', re.M)
+        self.writeItemToDB(cur, apiPage, classPattern, 'Class', fileName)
+
+        methodPattern = re.compile(r'class="method">\n.*?id="(.*?)">', re.M)
+        self.writeItemToDB(cur, apiPage, methodPattern, 'Methods', fileName)
+
+        attributePattern = re.compile(r'class="attribute">\n.*?id="(.*?)">', re.M)
+        self.writeItemToDB(cur, apiPage, attributePattern, 'Attribute', fileName)
+
+        functionPattern = re.compile(r'class="function">\n.*?id="(.*?)">', re.M)
+        self.writeItemToDB(cur, apiPage, functionPattern, 'Function', fileName)
 
         db.commit()
         db.close()
 
-    def writeItemToDB(self, cur, page, regularStr, typeName):
-        result = re.findall(regularStr, page)
-        for path, name in result:
-            if name.startswith('Version'):
-                break
-            cur.execute('INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?,?,?)',
-                        (name.decode('utf-8'), typeName, path.decode('utf-8')))
-            # print 'type: %s, name: %s, path: %s' % (typeName, name, path)
-        print 'write %d index item type = %s into DB' %(len(result), typeName)
+    def writeItemToDB(self, cur, page, pattern, typeName, fileName):
+        result = pattern.findall(page)
+        for item in result:
+            if isinstance(item, tuple):
+                if item[1].startswith('Version'):
+                    break
+
+                cur.execute('INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?,?,?)',
+                            (item[1].decode('utf-8'), typeName, item[0].decode('utf-8')))
+                # print 'type: %s, name: %s, path: %s' % (typeName, item[1], item[0])
+            elif isinstance(item, basestring):
+                path = '#'.join([fileName, item])
+                cur.execute('INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?,?,?)',
+                            (item.decode('utf-8'), typeName, path.decode('utf-8')))
+                # print 'type: %s, name: %s, path: %s' % (typeName, item[1], item[0])
+        print 'write %d index item type = %s into DB' % (len(result), typeName)
 
     def downloadSite(self):
         # 创建本地文件夹 docset 的文件夹
