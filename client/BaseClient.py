@@ -9,16 +9,21 @@ import shutil
 from jinja2 import Environment, PackageLoader
 import os, re, sqlite3
 from bs4 import BeautifulSoup
-
+from config.Config import Config
 
 class BaseClient(object):
     ENV = Environment(loader=PackageLoader('templates', ''), trim_blocks=True,
                       keep_trailing_newline=True, lstrip_blocks=True)
 
-    def __init__(self, docName, url):
-        self.url = url
-        self.docName = docName
-        self.docPath = docName + '.docset'
+    def __init__(self, config):
+        """
+
+        :type config: Config
+        """
+        self.config = config
+        self.url = config.documentUrl
+        self.docName = config.name
+        self.docPath = config.name + '.docset'
         self.outputPath = './output/'
         self.resourcesPath = os.path.join(self.outputPath, self.docPath, 'Contents', 'Resources')
         self.infoPath = os.path.join(self.outputPath, self.docPath, 'Contents', 'Info.plist')
@@ -40,7 +45,7 @@ class BaseClient(object):
 
         # 根据模板生成 Info.list
         template = self.ENV.get_template('Sphinx.plist')
-        infoTxt = template.render({'bundleIdentifier': self.docName})
+        infoTxt = template.render({'bundleIdentifier': self.docName, 'homeIndex': self.config.homeIndex})
         with open(self.infoPath, 'w') as f:
             f.write(infoTxt)
             print 'already write info.plist'
@@ -60,18 +65,26 @@ class BaseClient(object):
 
         page = open(os.path.join(self.documentsPath, 'index.html')).read()
 
-        result = re.findall(r'<a class="reference internal" href="(.*?)">(.*?)</a>', page)
-        # print result
-        for path, name in result:
-            if name.startswith('Version'):
-                break
-            cur.execute('INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?,?,?)',
-                                    (name.decode('utf-8'), 'Category', path.decode('utf-8')))
-            print 'type: %s, name: %s, path: %s' % ('Category', name, path)
+        # Guides
+        guidesRegular = r'<a class="reference internal" href="([^#]*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>'
+        self.writeItemToDB(cur, page, guidesRegular, 'Guides')
+
+        # category
+        categoryRegualar = r'<a class="reference internal" href="(.*?#.*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>'
+        self.writeItemToDB(cur, page, categoryRegualar, 'Category')
 
         db.commit()
         db.close()
 
+    def writeItemToDB(self, cur, page, regularStr, typeName):
+        result = re.findall(regularStr, page)
+        for path, name in result:
+            if name.startswith('Version'):
+                break
+            cur.execute('INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?,?,?)',
+                        (name.decode('utf-8'), typeName, path.decode('utf-8')))
+            # print 'type: %s, name: %s, path: %s' % (typeName, name, path)
+        print 'write %d index item type = %s into DB' %(len(result), typeName)
 
     def downloadSite(self):
         # 创建本地文件夹 docset 的文件夹
@@ -85,7 +98,7 @@ class BaseClient(object):
 
         # 移动整站到指定的文件夹
         shutil.move(os.path.join(self.outputPath, self.url.split('http://')[1]), self.resourcesPath)
-        os.rename(os.path.join(self.resourcesPath, self.docName), self.documentsPath)
+        os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-2]), self.documentsPath)
 
         # 删除刚才的下载的临时文件夹
         shutil.rmtree(os.path.join(self.outputPath, '/'.join(self.url.split('http://')[1].split('/')[0:1])))
@@ -93,10 +106,6 @@ class BaseClient(object):
 
 
     def removeUselessText(self):
-        pass
-        # 递归处理所有的html文件
-        # 1. 去掉 class="bodywrapper" 类
-        # 2. 去掉 <div class="sphinxsidebar"> 节点
 
         for root, dirs, files in os.walk(self.documentsPath):
             for file in files:
