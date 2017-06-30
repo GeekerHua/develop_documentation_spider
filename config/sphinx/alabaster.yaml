@@ -1,0 +1,40 @@
+homePageConfigList:
+- typeName: Guides
+  regex: <a class="reference internal" href="([^#]*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"
+
+- typeName: Category
+  regex: <a class="reference internal" href="(.*?#.*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"
+
+otherPageConfigList:
+- typeName: Class
+  regex: class="class">\n.*?id="(.*?)">
+  regexPattern: re.M
+  keyList:
+    - "name"
+
+- typeName: Methods
+  regex: class="method">\n.*?id="(.*?)">
+  regexPattern: re.M
+  keyList:
+    - "name"
+
+- typeName: Attribute
+  regex: class="attribute">\n.*?id="(.*?)">
+  regexPattern: re.M
+  keyList:
+    - "name"
+
+- typeName: Function
+  regex: class="function">\n.*?id="(.*?)">
+  regexPattern: re.M
+  keyList:
+    - "name"
+

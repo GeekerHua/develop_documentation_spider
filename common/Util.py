@@ -9,7 +9,8 @@ import re
 
 import copy
 import yaml
-from config.Config import Config
+
+import config.Config
 
 APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -57,7 +58,7 @@ class Sign(object):
 
 class JSONParser(object):
     """
-    改class用于将dict转object
+    该class用于将dict转object
     """
     _INSTANCE = None
 
@@ -127,8 +128,8 @@ def loadInspectorConfig(inspectorConfigFile):
     :rtype: InspectorConfig
     """
     f = readFile(inspectorConfigFile)
-    config = yaml.load(f)
-    return JSONParser.getInstance().transform(config, Config())
+    configData = yaml.load(f)
+    return JSONParser.getInstance().transform(configData, config.Config.Config())
 
 
 def readFile(fileName, mode='r', lines=False):
