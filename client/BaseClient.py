@@ -11,6 +11,7 @@ import os, re, sqlite3
 from bs4 import BeautifulSoup
 from config.Config import Config
 
+
 class BaseClient(object):
     ENV = Environment(loader=PackageLoader('templates', ''), trim_blocks=True,
                       keep_trailing_newline=True, lstrip_blocks=True)
@@ -21,7 +22,7 @@ class BaseClient(object):
         :type config: Config
         """
         self.config = config
-        self.url = config.documentUrl
+        self.url = config.documentUrl if not config.documentUrl.endswith('/') else config.documentUrl[:-1]
         self.docName = config.name
         self.docPath = config.name + '.docset'
         self.outputPath = './output/'
@@ -31,11 +32,11 @@ class BaseClient(object):
 
     def crawlTheSite(self):
 
-        # # self.downloadSite()
-        # #
-        # # self.removeUselessText()
-        #
-        # self.generateInfoPlist()
+        self.downloadSite()
+
+        self.removeUselessText()
+
+        self.generateInfoPlist()
 
         self.generateDB()
 
@@ -63,31 +64,33 @@ class BaseClient(object):
         cur.execute('CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);')
         cur.execute('CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);')
 
-        fileName = 'index.html'
-        page = open(os.path.join(self.documentsPath, fileName)).read()
+        for root, dirs, files in os.walk(self.documentsPath):
+            for fileName in files:
+                if fileName.endswith(".html"):
+                    page = open(os.path.join(root, fileName)).read()
 
-        # Guides
-        guidesPattern = re.compile(r'<a class="reference internal" href="([^#]*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>')
-        self.writeItemToDB(cur, page, guidesPattern, 'Guides', fileName)
+                    if fileName == self.config.homeIndex:
+                        # Guides
+                        guidesPattern = re.compile(
+                            r'<a class="reference internal" href="([^#]*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>')
+                        self.writeItemToDB(cur, page, guidesPattern, 'Guides', fileName)
 
-        # category
-        categoryPattern = re.compile(r'<a class="reference internal" href="(.*?#.*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>')
-        self.writeItemToDB(cur, page, categoryPattern, 'Category', fileName)
+                        # category
+                        categoryPattern = re.compile(
+                            r'<a class="reference internal" href="(.*?#.*?)">{0,1}[^>]*?>(.*?)<[^<]*?<{0,1}/a>')
+                        self.writeItemToDB(cur, page, categoryPattern, 'Category', fileName)
 
-        fileName = 'api.html'
+                    classPattern = re.compile(r'class="class">\n.*?id="(.*?)">', re.M)
+                    self.writeItemToDB(cur, page, classPattern, 'Class', fileName)
 
-        apiPage = open(os.path.join(self.documentsPath, fileName)).read()
-        classPattern = re.compile(r'class="class">\n.*?id="(.*?)">', re.M)
-        self.writeItemToDB(cur, apiPage, classPattern, 'Class', fileName)
+                    methodPattern = re.compile(r'class="method">\n.*?id="(.*?)">', re.M)
+                    self.writeItemToDB(cur, page, methodPattern, 'Methods', fileName)
 
-        methodPattern = re.compile(r'class="method">\n.*?id="(.*?)">', re.M)
-        self.writeItemToDB(cur, apiPage, methodPattern, 'Methods', fileName)
+                    attributePattern = re.compile(r'class="attribute">\n.*?id="(.*?)">', re.M)
+                    self.writeItemToDB(cur, page, attributePattern, 'Attribute', fileName)
 
-        attributePattern = re.compile(r'class="attribute">\n.*?id="(.*?)">', re.M)
-        self.writeItemToDB(cur, apiPage, attributePattern, 'Attribute', fileName)
-
-        functionPattern = re.compile(r'class="function">\n.*?id="(.*?)">', re.M)
-        self.writeItemToDB(cur, apiPage, functionPattern, 'Function', fileName)
+                    functionPattern = re.compile(r'class="function">\n.*?id="(.*?)">', re.M)
+                    self.writeItemToDB(cur, page, functionPattern, 'Function', fileName)
 
         db.commit()
         db.close()
@@ -119,13 +122,22 @@ class BaseClient(object):
             # 下载整站
             os.system('cd output && wget -r -p -np -k %s' % self.url)
 
-        # 移动整站到指定的文件夹
-        shutil.move(os.path.join(self.outputPath, self.url.split('http://')[1]), self.resourcesPath)
-        os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-2]), self.documentsPath)
+            # 移动整站到指定的文件夹
+            if self.url.startswith('http://'):
+                scheme = 'http://'
+            elif self.url.startswith('https://'):
+                scheme = 'https://'
+            else:
+                scheme = None
+            if scheme:
+                shutil.move(os.path.join(self.outputPath, self.url.split(scheme)[1]), self.resourcesPath)
+                shutil.rmtree(os.path.join(self.outputPath, '/'.join(self.url.split(scheme)[1].split('/')[0:1])))
+            else:
+                shutil.move(os.path.join(self.outputPath, self.url.split(scheme)), self.resourcesPath)
+            # 删除刚才的下载的临时文件夹
+                shutil.rmtree(os.path.join(self.outputPath, '/'.join(self.url.split(scheme).split('/')[0:1])))
 
-        # 删除刚才的下载的临时文件夹
-        shutil.rmtree(os.path.join(self.outputPath, '/'.join(self.url.split('http://')[1].split('/')[0:1])))
-
+            os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-1]), self.documentsPath)
 
 
     def removeUselessText(self):
@@ -140,7 +152,7 @@ class BaseClient(object):
                         comments = soup.find_all('div', {'class': 'sphinxsidebar'})
                         [comment.extract() for comment in comments]
                     with open(path, "w") as f:
-                        result = re.sub(r'^(.*?)<html', '<html',  "".join([str(item) for item in soup.contents]))
+                        result = re.sub(r'^(.*?)<html', '<html', "".join([str(item) for item in soup.contents]))
                         f.write(result)
 
     def setupIcon(self):

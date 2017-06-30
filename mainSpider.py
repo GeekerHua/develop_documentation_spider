@@ -6,16 +6,17 @@
 # @Software: PyCharm
 
 from client.BaseClient import BaseClient
-from config.Config import Config
 from common.Util import loadInspectorConfig
 
 
 if __name__ == '__main__':
-    jinja2Config = loadInspectorConfig('config/jinja2.yaml')
-    jinjia2Clicent = BaseClient(jinja2Config)
-    jinjia2Clicent.crawlTheSite()
+
+    for configName in ['config/jinja2.yaml', 'config/requests.yaml']:
+        configData = loadInspectorConfig(configName)
+        client = BaseClient(configData)
+        client.crawlTheSite()
 
 
-    # requestsConfig = loadInspectorConfig('config/requests.yaml')
+    # requestsConfig = loadInspectorConfig('config/bs4.yaml')
     # requestsClicent = BaseClient(requestsConfig)
     # requestsClicent.crawlTheSite()
