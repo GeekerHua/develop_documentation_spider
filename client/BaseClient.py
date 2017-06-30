@@ -4,6 +4,7 @@
 # @Site    : 
 # @File    : baseClient.py
 # @Software: PyCharm
+import shutil
 
 from jinja2 import Environment, PackageLoader
 import os, sqlite3
@@ -40,7 +41,6 @@ class BaseClient(object):
         self.setupIcon()
 
     def generateInfoPlist(self):
-
         # 根据模板生成 Info.list
         template = self.ENV.get_template('Sphinx.plist')
         infoTxt = template.render({'bundleIdentifier': self.config.name, 'homeIndex': self.config.homeIndex})
@@ -72,6 +72,15 @@ class BaseClient(object):
         else:
             # 创建本地 docset 的文件夹
             os.makedirs(self.resourcesPath)
+            # 下载整站
+            os.system('cd output && wget -r -p -np -k %s' % self.url)
+
+            # 移动整站到指定的文件夹
+            shutil.move(os.path.join(self.outputPath, self.url.split('//')[-1]), self.resourcesPath)
+            # 删除刚才的下载的临时文件夹
+            shutil.rmtree(os.path.join(self.outputPath, self.url.split('//')[-1].split('/')[0]))
+
+            os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-1]), self.documentsPath)
 
     def removeUselessText(self):
         pass

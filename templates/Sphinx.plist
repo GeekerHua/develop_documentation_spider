@@ -12,5 +12,7 @@
         <string>{{ homeIndex }}</string>
         <key>isDashDocset</key>
         <true/>
+        <key>isJavaScriptEnabled</key>
+        <true/>
     </dict>
 </plist>

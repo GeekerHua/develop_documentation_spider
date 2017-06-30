@@ -14,15 +14,6 @@ from BaseClient import BaseClient
 
 
 class SphinxClient(BaseClient):
-    def __init__(self, config):
-        """
-
-        :type config: Config
-        """
-        super(SphinxClient, self).__init__(config)
-        # self.resourcesPath = os.path.join(self.outputPath, self.docPath, 'Contents', 'Resources')
-        # self.infoPath = os.path.join(self.outputPath, self.docPath, 'Contents', 'Info.plist')
-        # self.documentsPath = os.path.join(self.resourcesPath, 'Documents')
 
     def generateDB(self):
         dbFilePath = os.path.join(self.resourcesPath, 'docSet.dsidx')
@@ -50,19 +41,6 @@ class SphinxClient(BaseClient):
 
         db.commit()
         db.close()
-
-    def downloadSite(self):
-        super(SphinxClient, self).downloadSite()
-
-        # 下载整站
-        os.system('cd output && wget -r -p -np -k %s' % self.url)
-
-        # 移动整站到指定的文件夹
-        shutil.move(os.path.join(self.outputPath, self.url.split('//')[-1]), self.resourcesPath)
-        # 删除刚才的下载的临时文件夹
-        shutil.rmtree(os.path.join(self.outputPath, self.url.split('//')[-1].split('/')[0]))
-
-        os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-1]), self.documentsPath)
 
     def removeUselessText(self):
 
