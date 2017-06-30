@@ -5,56 +5,16 @@
 # @File    : Util.py
 # @Software: PyCharm
 import os
-import re
 
 import copy
 import yaml
 
-import config.Config
-
-APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-BASE_TYPE_LIST = [int, unicode, str, bool, tuple, float]
-
-READ_FILE_TYPE = ['r', 'rb', 'r+', 'rb+', 'w+', 'wb+', 'a+', 'ab+']
-WRITE_FILE_TYPE = ['r+', 'rb+', 'w', 'wb', 'w+', 'wb+', 'a', 'ab', 'a+', 'ab+']
+from common.Constants import Sign, BASE_TYPE_LIST, READ_FILE_TYPE
+from config.Config import Config
 
 
 class Result(object):
     pass
-
-
-
-class Sign(object):
-    ANNOTATION = '#'
-    ENTER = '\n'
-    MAC_ENTER = '\r'
-    SEP_NEW = '\r\n'
-    SEP = '/'
-    SPACE = ' '
-    NULL = ''
-    EQUAL = '='
-    IN_LINE = '-'
-    DOT = '.'
-    COMMA = ','
-    UNDERLINE = '_'
-    TAB = '\t'
-    DOLLAR = '$'
-    COLON = ':'
-    OR = '|'
-    LOGICAL_OR = '||'
-    PERCENT = '%'
-    PLUS = '+'
-    SECTION_BEGIN = '['
-    SECTION_END = ']'
-    RIGHT_BRACE = '}'
-    LEFT_BRACE = '{'
-    SEM = ';'
-    AT = '@'
-    EMPTY_ENV = '${}'
-    CHINESE_EQUAL = u'\uff1d'
-
-
 
 class JSONParser(object):
     """
@@ -129,7 +89,7 @@ def loadInspectorConfig(inspectorConfigFile):
     """
     f = readFile(inspectorConfigFile)
     configData = yaml.load(f)
-    return JSONParser.getInstance().transform(configData, config.Config.Config())
+    return JSONParser.getInstance().transform(configData, Config())
 
 
 def readFile(fileName, mode='r', lines=False):

@@ -57,16 +57,10 @@ class SphinxClient(BaseClient):
         # 下载整站
         os.system('cd output && wget -r -p -np -k %s' % self.url)
 
-        scheme = 'http://'
-        self.url.replace('https://', scheme)
-        if self.url.startswith(scheme):
-            # 移动整站到指定的文件夹
-            shutil.move(os.path.join(self.outputPath, self.url.split(scheme)[1]), self.resourcesPath)
-            # 删除刚才的下载的临时文件夹
-            shutil.rmtree(os.path.join(self.outputPath, '/'.join(self.url.split(scheme)[1].split('/')[0:1])))
-        else:
-            shutil.move(os.path.join(self.outputPath, self.url), self.resourcesPath)
-            shutil.rmtree(os.path.join(self.outputPath, '/'.join(self.url.split('/')[0:1])))
+        # 移动整站到指定的文件夹
+        shutil.move(os.path.join(self.outputPath, self.url.split('//')[-1]), self.resourcesPath)
+        # 删除刚才的下载的临时文件夹
+        shutil.rmtree(os.path.join(self.outputPath, self.url.split('//')[-1].split('/')[0]))
 
         os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-1]), self.documentsPath)
 

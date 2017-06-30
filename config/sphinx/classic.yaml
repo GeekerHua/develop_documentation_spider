@@ -1,0 +1,7 @@
+homePageConfigList:
+- typeName: Sections
+  regex: <a class="reference internal" href="(.*?)">(.*?)</a>
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"
