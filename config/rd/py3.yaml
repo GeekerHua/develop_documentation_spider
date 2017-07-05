@@ -1,0 +1,21 @@
+homePageConfigList:
+- typeName: Sections
+  regex: <a class="biglink" href="(.*?)">(.*?)</a>
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"
+
+otherPageConfigList:
+- typeName: Tag
+  regex: <a class="reference internal" href="(.*?)">(.*?)</a>
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"
+- typeName: Methods
+  regex: <dl class="method">\n<dt id="(.*?)">
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"

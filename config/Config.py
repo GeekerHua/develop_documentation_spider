@@ -5,9 +5,8 @@
 # @File    : Config.py
 # @Software: PyCharm
 import re
-
 from common.Constants import Sign
-import common.Util
+from common.Util import loadInspectorConfig
 
 class Config(object):
 
@@ -48,6 +47,6 @@ class Config(object):
         self._theme = value
         if value:
             newValue = value.replace(Sign.DOT, Sign.SEP)
-            config = common.Util.loadInspectorConfig(newValue + '.yaml')
+            config = loadInspectorConfig(newValue + '.yaml')
             self.homePageConfigList = config.homePageConfigList
             self.otherPageConfigList = config.otherPageConfigList

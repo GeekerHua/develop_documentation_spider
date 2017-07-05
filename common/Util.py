@@ -10,7 +10,7 @@ import copy
 import yaml
 
 from common.Constants import Sign, BASE_TYPE_LIST, READ_FILE_TYPE
-from config.Config import Config
+import config.Config
 
 
 class Result(object):
@@ -89,7 +89,7 @@ def loadInspectorConfig(inspectorConfigFile):
     """
     f = readFile(inspectorConfigFile)
     configData = yaml.load(f)
-    return JSONParser.getInstance().transform(configData, Config())
+    return JSONParser.getInstance().transform(configData, config.Config.Config())
 
 
 def readFile(fileName, mode='r', lines=False):

@@ -1,0 +1,5 @@
+name: py3
+homeIndex: doc/Python-3.6.0/index.html
+documentUrl: https://www.rddoc.com/doc/Python-3.6.0/
+theme: config.rd.py3
+

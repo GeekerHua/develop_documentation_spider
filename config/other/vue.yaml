@@ -1,10 +1,4 @@
 homePageConfigList:
-#- typeName: Category
-#  regex: <h2 id=".*?"><a href="(.*?)" class="headerlink" title=".*?"></a>(.*?)</h2>
-#  regexPattern: null
-#  keyList:
-#    - "path"
-#    - "name"
 
 - typeName: Sections
   regex: <h3 id=".*?"><a href="(.*?)" class="headerlink" title=".*?"></a>(.*?)</h3>
