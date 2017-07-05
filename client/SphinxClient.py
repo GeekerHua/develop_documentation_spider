@@ -5,7 +5,6 @@
 # @File    : sphinxClient.py
 # @Software: PyCharm
 import os
-import shutil
 import sqlite3
 import re
 from bs4 import BeautifulSoup
@@ -42,7 +41,7 @@ class SphinxClient(BaseClient):
         db.commit()
         db.close()
 
-    def removeUselessText(self):
+    def changeSomeText(self):
 
         for root, dirs, files in os.walk(self.documentsPath):
             for file in files:

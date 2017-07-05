@@ -10,7 +10,6 @@ from jinja2 import Environment, PackageLoader
 import os, sqlite3
 from config.Config import Config
 
-
 class BaseClient(object):
     ENV = Environment(loader=PackageLoader('templates', ''), trim_blocks=True,
                       keep_trailing_newline=True, lstrip_blocks=True)
@@ -32,7 +31,7 @@ class BaseClient(object):
 
         self.downloadSite()
 
-        self.removeUselessText()
+        self.changeSomeText()
 
         self.generateInfoPlist()
 
@@ -82,7 +81,7 @@ class BaseClient(object):
 
             os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-1]), self.documentsPath)
 
-    def removeUselessText(self):
+    def changeSomeText(self):
         pass
 
     def setupIcon(self):

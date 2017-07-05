@@ -6,7 +6,6 @@
 # @Software: PyCharm
 import os
 import shutil
-
 import sqlite3
 
 from BaseClient import BaseClient
@@ -50,13 +49,13 @@ class SiteClient(BaseClient):
         db.commit()
         db.close()
 
-    def removeUselessText(self):
+    def changeSomeText(self):
 
         for root, dirs, files in os.walk(self.documentsPath):
             for fileName in files:
                 if fileName == self.config.homeIndex.split('/')[-1].split('.')[0]:
                     path = os.path.join(root, fileName)
                     with open(path, "r") as f:
-                        content = f.read().replace("api#", "#")
+                        content = f.read().replace("api#", self.config.homeIndex + "#")
                     with open(path + '.html', "w") as f:
                         f.write(content)
