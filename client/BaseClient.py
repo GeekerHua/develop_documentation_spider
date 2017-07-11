@@ -29,7 +29,7 @@ class BaseClient(object):
 
     def crawlTheSite(self):
 
-        self.downloadSite()
+        # self.downloadSite()
 
         self.changeSomeText()
 
@@ -59,33 +59,49 @@ class BaseClient(object):
 
         cur.execute('CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);')
         cur.execute('CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);')
+        self.writeDB(cur, db)
 
+    def writeDB(self, cur, db):
         for root, dirs, files in os.walk(self.documentsPath):
             for fileName in files:
                 if fileName.endswith(".html"):
                     page = open(os.path.join(root, fileName)).read()
                     if fileName == self.config.homeIndex:
                         for config in self.config.homePageConfigList:
-                            self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
+                            if config.regular:
+                                self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
                     else:
                         for config in self.config.otherPageConfigList:
-                            self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
+                            if config.regular:
+                                self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
 
         db.commit()
         db.close()
 
-    def writeItemToDB(self, cur, page, pattern, typeName, fileName):
+    def writeItemToDB(self, cur, root, fileName, pattern, typeName):
+        fullPath = os.path.join(root, fileName)
+        page = open(fullPath).read()
         result = pattern.findall(page)
         for item in result:
             if isinstance(item, tuple):
-                if item[1].startswith('Version'):
+                name = item[1]
+                if name.startswith('Version'):
                     break
-                cur.execute('INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?,?,?)',
-                            (item[1].decode('utf-8'), typeName, item[0].decode('utf-8')))
+                path = item[0].decode('utf-8')
             elif isinstance(item, basestring):
-                path = '#'.join([fileName, item])
-                cur.execute('INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?,?,?)',
-                            (item.decode('utf-8'), typeName, path.decode('utf-8')))
+                name = item
+                path = '#'.join([fullPath[len(self.documentsPath):], item]).decode('utf-8')
+            if path.startswith('../'):
+                if self.config.indexPage and fullPath == os.path.join(self.documentsPath, self.config.indexPage):
+                    tmpPath = self.config.indexPage
+                elif self.config.homeIndex and fullPath == os.path.join(self.documentsPath, self.config.homeIndex):
+                    tmpPath = self.config.homeIndex
+                else:
+                    tmpPath = ''
+                if len(tmpPath.split('/')) >= 2:
+                    path = path.replace('..', '/'.join(tmpPath.split('/')[:-2]))
+            cur.execute('REPLACE INTO searchIndex(name, type, path) VALUES (?,?,?)',
+                            (name.decode('utf-8'), typeName, path))
         if result:
             print 'write %d index item type = %s into DB' % (len(result), typeName)
 

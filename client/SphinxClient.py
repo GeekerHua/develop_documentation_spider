@@ -5,7 +5,6 @@
 # @File    : sphinxClient.py
 # @Software: PyCharm
 import os
-import sqlite3
 import re
 from bs4 import BeautifulSoup
 
@@ -13,40 +12,27 @@ from BaseClient import BaseClient
 
 
 class SphinxClient(BaseClient):
-
-    def generateDB(self):
-        dbFilePath = os.path.join(self.resourcesPath, 'docSet.dsidx')
-        db = sqlite3.connect(dbFilePath)
-        cur = db.cursor()
-
-        try:
-            cur.execute('DROP TABLE searchIndex;')
-        except:
-            pass
-
-        cur.execute('CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);')
-        cur.execute('CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);')
-
+    def writeDB(self, cur, db):
         for root, dirs, files in os.walk(self.documentsPath):
             for fileName in files:
                 if fileName.endswith(".html"):
-                    page = open(os.path.join(root, fileName)).read()
-                    if fileName == self.config.homeIndex:
+                    if os.path.join(root, fileName) == os.path.join(self.documentsPath, self.config.homeIndex):
                         for config in self.config.homePageConfigList:
-                            self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
+                            if config.regular:
+                                self.writeItemToDB(cur, root, fileName, config.regular, config.typeName)
                     else:
                         for config in self.config.otherPageConfigList:
-                            self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
+                            if config.regular:
+                                self.writeItemToDB(cur, root, fileName, config.regular, config.typeName)
 
         db.commit()
         db.close()
 
     def changeSomeText(self):
-
         for root, dirs, files in os.walk(self.documentsPath):
-            for file in files:
-                if file.endswith(".html"):
-                    path = os.path.join(root, file)
+            for fileName in files:
+                if fileName.endswith(".html"):
+                    path = os.path.join(root, fileName)
                     with open(path, "r") as f:
                         content = f.read().replace("bodywrapper", "")
                         soup = BeautifulSoup(content)

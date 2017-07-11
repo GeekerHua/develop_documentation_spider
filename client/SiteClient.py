@@ -6,7 +6,6 @@
 # @Software: PyCharm
 import os
 import shutil
-import sqlite3
 
 from BaseClient import BaseClient
 
@@ -26,25 +25,13 @@ class SiteClient(BaseClient):
 
             os.rename(os.path.join(self.resourcesPath, self.url.split('//')[-1].split('/')[0]), self.documentsPath)
 
-    def generateDB(self):
-        dbFilePath = os.path.join(self.resourcesPath, 'docSet.dsidx')
-        db = sqlite3.connect(dbFilePath)
-        cur = db.cursor()
-
-        try:
-            cur.execute('DROP TABLE searchIndex;')
-        except:
-            pass
-
-        cur.execute('CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);')
-        cur.execute('CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);')
-
+    def writeDB(self, cur, db):
         for root, dirs, files in os.walk(self.documentsPath):
             for fileName in files:
-                if fileName == self.config.homeIndex.split('/')[-1]:
-                    page = open(os.path.join(root, fileName)).read()
+                if os.path.join(root, fileName) == os.path.join(self.documentsPath, self.config.homeIndex):
                     for config in self.config.homePageConfigList:
-                        self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
+                        if config.regular:
+                            self.writeItemToDB(cur, root, fileName, config.regular, config.typeName)
 
         db.commit()
         db.close()

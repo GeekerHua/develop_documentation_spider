@@ -6,8 +6,8 @@
 # @Software: PyCharm
 import re
 from common.Constants import Sign
-from common.Util import loadInspectorConfig
-
+# from common.Util import loadInspectorConfig
+import common.Util
 class Config(object):
 
     class PageConfig(object):
@@ -19,10 +19,15 @@ class Config(object):
 
         @property
         def regular(self):
-            return re.compile(self.regex,
-                              0 if self.regexPattern == None else eval(self.regexPattern))
+            if self.regex:
+                return re.compile(self.regex, 0 if self.regexPattern == None else eval(self.regexPattern))
+            else:
+                return None
 
     class HomePageConfig(PageConfig):
+        pass
+
+    class indexPageConfig(PageConfig):
         pass
 
     class OtherPageConfig(PageConfig):
@@ -32,10 +37,11 @@ class Config(object):
         self.name = None
         self.homeIndex = None
         self.documentUrl = None
-        self.theme = None
+        self.indexPage = None
         self._theme = None
 
         self.homePageConfigList = [Config.HomePageConfig()]
+        self.indexPageConfigList = [Config.indexPageConfig()]
         self.otherPageConfigList = [Config.OtherPageConfig()]
 
     @property
@@ -47,6 +53,8 @@ class Config(object):
         self._theme = value
         if value:
             newValue = value.replace(Sign.DOT, Sign.SEP)
-            config = loadInspectorConfig(newValue + '.yaml')
+            config = common.Util.loadInspectorConfig(newValue + '.yaml')
             self.homePageConfigList = config.homePageConfigList
             self.otherPageConfigList = config.otherPageConfigList
+            self.indexPageConfigList = config.indexPageConfigList
+

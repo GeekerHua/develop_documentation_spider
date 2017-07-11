@@ -1,20 +1,38 @@
 homePageConfigList:
-- typeName: Sections
-  regex: <a class="biglink" href="(.*?)">(.*?)</a>
-  regexPattern: null
-  keyList:
-    - "path"
-    - "name"
-
-otherPageConfigList:
 - typeName: Tag
   regex: <a class="reference internal" href="(.*?)">(.*?)</a>
   regexPattern: null
   keyList:
     - "path"
     - "name"
+
+indexPageConfigList:
+- typeName: Tag
+  regex: <a class="reference internal" href="(.*?)">(.*?)</a>
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"
+
+otherPageConfigList:
 - typeName: Methods
   regex: <dl class="method">\n<dt id="(.*?)">
+  regexPattern: null
+  keyList:
+    - "path"
+- typeName: Functions
+  regex: <dl class="function">\n<dt id="(.*?)">
+  regexPattern: null
+  keyList:
+    - "path"
+- typeName: Classes
+  regex: <dl class="class">\n<dt id="(.*?)">
+  regexPattern: null
+  keyList:
+    - "path"
+    - "name"
+- typeName: Attributes
+  regex: <dl class="attribute">\n<dt id="(.*?)">
   regexPattern: null
   keyList:
     - "path"
