@@ -1,14 +1,14 @@
-homePageConfigList:
-- typeName: Tag
-  regex: <a class="reference internal" href="(.*?)">(.*?)</a>
-  regexPattern: null
-  keyList:
-    - "path"
-    - "name"
+#homePageConfigList:
+#- typeName: Tag
+#  regex: <a class="reference internal" href="(.*?)">(.*?)</a>
+#  regexPattern: null
+#  keyList:
+#    - "path"
+#    - "name"
 
 indexPageConfigList:
 - typeName: Tag
-  regex: <a class="reference internal" href="(.*?)">(.*?)</a>
+  regex: <a class="reference internal" href="(.*?)">[^>]*?>{0,1}([^<>]*?)<{0,1}[^<]*?</a>
   regexPattern: null
   keyList:
     - "path"

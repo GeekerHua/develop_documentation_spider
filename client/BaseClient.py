@@ -42,7 +42,7 @@ class BaseClient(object):
     def generateInfoPlist(self):
         # 根据模板生成 Info.list
         template = self.ENV.get_template('Sphinx.plist')
-        infoTxt = template.render({'bundleIdentifier': self.config.name, 'homeIndex': self.config.homeIndex})
+        infoTxt = template.render({'bundleIdentifier': self.config.name, 'homePage': self.config.homePage or self.config.indexPage})
         with open(self.infoPath, 'w') as f:
             f.write(infoTxt)
             print 'already write info.plist'
@@ -63,45 +63,51 @@ class BaseClient(object):
 
     def writeDB(self, cur, db):
         for root, dirs, files in os.walk(self.documentsPath):
+
             for fileName in files:
+                fullPath = os.path.join(root, fileName)
                 if fileName.endswith(".html"):
-                    page = open(os.path.join(root, fileName)).read()
-                    if fileName == self.config.homeIndex:
-                        for config in self.config.homePageConfigList:
-                            if config.regular:
-                                self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
+                    if self.config.indexPage and fullPath == os.path.join(self.documentsPath, self.config.indexPage):
+                        configList = self.config.indexPageConfigList
+                    elif self.config.homePage and fullPath == os.path.join(self.documentsPath, self.config.homePage):
+                        configList = self.config.homePageConfigList
                     else:
-                        for config in self.config.otherPageConfigList:
-                            if config.regular:
-                                self.writeItemToDB(cur, page, config.regular, config.typeName, fileName)
+                        configList = self.config.otherPageConfigList
+                    for config in configList:
+                        if config.regular:
+                            self.writeItemToDB(cur, fullPath, config.regular, config.typeName)
 
         db.commit()
         db.close()
 
-    def writeItemToDB(self, cur, root, fileName, pattern, typeName):
-        fullPath = os.path.join(root, fileName)
+    def writeItemToDB(self, cur, fullPath, pattern, typeName):
         page = open(fullPath).read()
         result = pattern.findall(page)
         for item in result:
             if isinstance(item, tuple):
-                name = item[1]
+                name = item[1].decode('utf-8')
                 if name.startswith('Version'):
                     break
                 path = item[0].decode('utf-8')
             elif isinstance(item, basestring):
-                name = item
+                name = item.decode('utf-8')
                 path = '#'.join([fullPath[len(self.documentsPath):], item]).decode('utf-8')
+            if not name:
+                continue
+
+            if self.config.indexPage and fullPath == os.path.join(self.documentsPath, self.config.indexPage):
+                tmpPath = self.config.indexPage
+            elif self.config.homePage and fullPath == os.path.join(self.documentsPath, self.config.homePage):
+                tmpPath = self.config.homePage
+            else:
+                tmpPath = ''
             if path.startswith('../'):
-                if self.config.indexPage and fullPath == os.path.join(self.documentsPath, self.config.indexPage):
-                    tmpPath = self.config.indexPage
-                elif self.config.homeIndex and fullPath == os.path.join(self.documentsPath, self.config.homeIndex):
-                    tmpPath = self.config.homeIndex
-                else:
-                    tmpPath = ''
                 if len(tmpPath.split('/')) >= 2:
                     path = path.replace('..', '/'.join(tmpPath.split('/')[:-2]))
+            elif not path.startswith('doc'):
+                path = os.path.join('doc/Django-1.10.5', path)
             cur.execute('REPLACE INTO searchIndex(name, type, path) VALUES (?,?,?)',
-                            (name.decode('utf-8'), typeName, path))
+                            (name, typeName, path))
         if result:
             print 'write %d index item type = %s into DB' % (len(result), typeName)
 

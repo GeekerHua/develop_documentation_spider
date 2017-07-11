@@ -1,4 +1,4 @@
 name: vue
-homeIndex: v2/api.html
+homePage: v2/api.html
 documentUrl: https://cn.vuejs.org/v2/api/
 theme: config.other.vue

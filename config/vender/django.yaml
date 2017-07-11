@@ -1,5 +1,5 @@
 name: django
-homeIndex: index.html
+indexPage: doc/Django-1.10.5/index.html
 documentUrl: https://www.rddoc.com/doc/Django-1.10.5/
 theme: config.rd.py3
 

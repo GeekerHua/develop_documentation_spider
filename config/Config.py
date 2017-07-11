@@ -35,8 +35,8 @@ class Config(object):
 
     def __init__(self):
         self.name = None
-        self.homeIndex = None
         self.documentUrl = None
+        self.homePage = None
         self.indexPage = None
         self._theme = None
 
