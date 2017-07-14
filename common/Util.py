@@ -4,9 +4,12 @@
 # @Site    : 
 # @File    : Util.py
 # @Software: PyCharm
+import importlib
 import os
-
+import client
 import copy
+
+import sys
 import yaml
 
 from common.Constants import Sign, BASE_TYPE_LIST, READ_FILE_TYPE
@@ -90,6 +93,35 @@ def loadInspectorConfig(inspectorConfigFile):
     f = readFile(inspectorConfigFile)
     configData = yaml.load(f)
     return JSONParser.getInstance().transform(configData, config.Config.Config())
+
+
+class ReflectTool(object):
+    @staticmethod
+    def _getPackageAndClassName(fullName):
+        """
+        获取module名字和class name
+        :type fullName: str
+        :rtype: tuple[str,str]
+        """
+        pos = fullName.rfind(Sign.DOT)
+        moduleName = fullName[:pos]
+        className = fullName[pos + 1:]
+        return moduleName, className
+
+    @staticmethod
+    def dynamicNewObj(moduleClassName, *args, **kwargs):
+        """
+        动态new 对象
+        :type moduleClassName: str
+        :rtype: object
+        """
+        moduleName, className = ReflectTool._getPackageAndClassName(moduleClassName)
+        if (not sys.modules.has_key(moduleName)):
+            targetModule = importlib.import_module(moduleName)
+        else:
+            targetModule = sys.modules.get(moduleName)
+        targetClass = getattr(targetModule, className)
+        return targetClass(*args, **kwargs)
 
 
 def readFile(fileName, mode='r', lines=False):

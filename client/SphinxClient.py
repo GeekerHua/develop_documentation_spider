@@ -12,21 +12,6 @@ from BaseClient import BaseClient
 
 
 class SphinxClient(BaseClient):
-    def writeDB(self, cur, db):
-        for root, dirs, files in os.walk(self.documentsPath):
-            for fileName in files:
-                if fileName.endswith(".html"):
-                    if os.path.join(root, fileName) == os.path.join(self.documentsPath, self.config.homeIndex):
-                        for config in self.config.homePageConfigList:
-                            if config.regular:
-                                self.writeItemToDB(cur, root, fileName, config.regular, config.typeName)
-                    else:
-                        for config in self.config.otherPageConfigList:
-                            if config.regular:
-                                self.writeItemToDB(cur, root, fileName, config.regular, config.typeName)
-
-        db.commit()
-        db.close()
 
     def changeSomeText(self):
         for root, dirs, files in os.walk(self.documentsPath):

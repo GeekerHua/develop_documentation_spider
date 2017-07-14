@@ -1,4 +1,4 @@
 name: requests
-homePage: index.html
 documentUrl: http://docs.python-requests.org/zh_CN/latest/
 theme: config.sphinx.alabaster
+client: client.SphinxClient.SphinxClient

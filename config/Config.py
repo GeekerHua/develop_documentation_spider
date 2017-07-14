@@ -4,6 +4,7 @@
 # @Site    : 
 # @File    : Config.py
 # @Software: PyCharm
+import os
 import re
 from common.Constants import Sign
 # from common.Util import loadInspectorConfig
@@ -34,15 +35,34 @@ class Config(object):
         pass
 
     def __init__(self):
+        self._homePage = None
+        self._indexPage = None
+        self._theme = None
+
         self.name = None
         self.documentUrl = None
-        self.homePage = None
-        self.indexPage = None
-        self._theme = None
+        self.client = 'client.BaseClient'
 
         self.homePageConfigList = [Config.HomePageConfig()]
         self.indexPageConfigList = [Config.indexPageConfig()]
         self.otherPageConfigList = [Config.OtherPageConfig()]
+
+
+    @property
+    def indexPage(self):
+        return os.path.join('/'.join(self.documentUrl.split('//')[1].split('/')[1:]), self._indexPage) if self._indexPage else None
+
+    @indexPage.setter
+    def indexPage(self, value):
+        self._indexPage = value
+
+    @property
+    def homePage(self):
+        return os.path.join('/'.join(self.documentUrl.split('//')[1].split('/')[1:]), self._homePage or 'index.html')
+
+    @homePage.setter
+    def homePage(self, value):
+        self._homePage = value
 
     @property
     def theme(self):

@@ -9,7 +9,7 @@
         <key>DocSetPlatformFamily</key>
         <string>{{ bundleIdentifier}}</string>
         <key>dashIndexFilePath</key>
-        <string>{{ homeIndex }}</string>
+        <string>{{ homePage }}</string>
         <key>isDashDocset</key>
         <true/>
         <key>isJavaScriptEnabled</key>

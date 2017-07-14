@@ -29,7 +29,7 @@ class BaseClient(object):
 
     def crawlTheSite(self):
 
-        # self.downloadSite()
+        self.downloadSite()
 
         self.changeSomeText()
 
@@ -80,52 +80,78 @@ class BaseClient(object):
         db.commit()
         db.close()
 
-    def writeItemToDB(self, cur, fullPath, pattern, typeName):
+    def writeItemToDB(self, cur, fullPath, regex, typeName):
+        """
+        搜索匹配索引，并写入数据库
+        :param cur: 数据库句柄
+        :param fullPath: 当前完整的文件路径
+        :param regex: 正则对象
+        :param typeName: 索引类型
+        """
         page = open(fullPath).read()
-        result = pattern.findall(page)
+        result = regex.findall(page)
         for item in result:
-            if isinstance(item, tuple):
-                name = item[1].decode('utf-8')
+            if isinstance(item, tuple):  # 通常是目录
+                name = item[1]
                 if name.startswith('Version'):
                     break
-                path = item[0].decode('utf-8')
-            elif isinstance(item, basestring):
-                name = item.decode('utf-8')
-                path = '#'.join([fullPath[len(self.documentsPath):], item]).decode('utf-8')
+                path = item[0]
+            elif isinstance(item, basestring): # 通常是页内链接
+                name = item
+                path = '#'.join([fullPath[len(self.documentsPath):], item])
             if not name:
                 continue
 
-            if self.config.indexPage and fullPath == os.path.join(self.documentsPath, self.config.indexPage):
-                tmpPath = self.config.indexPage
-            elif self.config.homePage and fullPath == os.path.join(self.documentsPath, self.config.homePage):
-                tmpPath = self.config.homePage
-            else:
-                tmpPath = ''
-            if path.startswith('../'):
-                if len(tmpPath.split('/')) >= 2:
-                    path = path.replace('..', '/'.join(tmpPath.split('/')[:-2]))
-            elif not path.startswith('doc'):
-                path = os.path.join('doc/Django-1.10.5', path)
+            # if self.config.indexPage and fullPath == os.path.join(self.documentsPath, self.config.indexPage):
+            #     tmpPath = self.config.indexPage
+            # elif self.config.homePage and fullPath == os.path.join(self.documentsPath, self.config.homePage):
+            #     tmpPath = self.config.homePage
+            # else:
+            #     tmpPath = ''
+            path = self._changeRelativePath(self.documentsPath, fullPath, path)
+            # if path.startswith('../'):
+            #     if len(tmpPath.split('/')) >= 2:
+            #         path = path.replace('..', '/'.join(tmpPath.split('/')[:-2]))
+            # elif not path.startswith('doc'):
+            #     baseDir = '' #'doc/Django-1.10.5'
+            #     # path 需要时从Documents开始的绝对路径，而不能是相对路径
+            #     path = os.path.join(baseDir, path)
             cur.execute('REPLACE INTO searchIndex(name, type, path) VALUES (?,?,?)',
-                            (name, typeName, path))
+                            (name.decode('utf8'), typeName, path.decode('utf8')))
         if result:
             print 'write %d index item type = %s into DB' % (len(result), typeName)
 
     def downloadSite(self):
+        """
+        下载整站
+        """
         if os.path.exists(self.resourcesPath):
-            print '已有这个文件夹name = {name}'.format(name=self.docPath)
-        else:
-            # 创建本地 docset 的文件夹
-            os.makedirs(self.resourcesPath)
-            # 下载整站
-            os.system('cd output && wget -r -p -np -k %s' % self.url)
+            # print '已有这个文件夹name = {name}'.format(name=self.docPath)
+            shutil.rmtree(self.resourcesPath)
 
-            # 移动整站到指定的文件夹
-            shutil.move(os.path.join(self.outputPath, self.url.split('//')[-1]), self.resourcesPath)
-            # 删除刚才的下载的临时文件夹
-            shutil.rmtree(os.path.join(self.outputPath, self.url.split('//')[-1].split('/')[0]))
+        # 创建本地 docset 的文件夹
+        os.makedirs(self.resourcesPath)
+        # 下载整站
+        os.system('cd output && wget -r -p -np -k %s' % self.url)
 
-            os.rename(os.path.join(self.resourcesPath, self.url.split('/')[-1]), self.documentsPath)
+        # 复制整站到指定的文件夹
+        originDirPath = self.url.split('//')[-1].split('/')[0]
+        shutil.move(os.path.join(self.outputPath, originDirPath), self.resourcesPath)
+
+        os.rename(os.path.join(self.resourcesPath, originDirPath), self.documentsPath)
+
+    def _changeRelativePath(self, baseRootPath, basePath, relativePath):
+        """
+        修改相对路径
+        :param baseRootPath: 最终要基于的根路径
+        :param basePath: 当前所在的路径
+        :param relativePath: 相对于当前路径的目标路径
+        :rtype: str
+        """
+        count = relativePath.count('../')
+        tmpPath = '/'.join(basePath.split('/')[:-(count + 1)])
+        p = os.path.join(tmpPath, '/'.join(relativePath.split('/')[count:]))
+        return p.replace(baseRootPath, '')
 
     def changeSomeText(self):
         pass

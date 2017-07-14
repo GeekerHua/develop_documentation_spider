@@ -1,4 +1,4 @@
 name: jinja2
-homePage: index.html
 documentUrl: http://docs.jinkan.org/docs/jinja2/
 theme: config.sphinx.alabaster
+client: client.SphinxClient.SphinxClient

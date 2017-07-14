@@ -4,18 +4,14 @@
 # @Site    : 
 # @File    : mainSpider.py
 # @Software: PyCharm
-
-from common.Util import loadInspectorConfig
+# from BaseClient import BaseClient
+from common.Util import loadInspectorConfig, ReflectTool
 from client.SphinxClient import SphinxClient
+from client.SiteClient import SiteClient
+from client.RdClient import RdClient
 
 if __name__ == '__main__':
 
-    for configName in ['config/vender/jinja2.yaml', 'config/vender/requests.yaml']:
-        configData = loadInspectorConfig(configName)
-        client = SphinxClient(configData)
-        client.crawlTheSite()
-
-
-    requestsConfig = loadInspectorConfig('config/vender/jinja2.yaml')
-    requestsClicent = SphinxClient(requestsConfig)
+    requestsConfig = loadInspectorConfig('config/vender/requests.yaml')
+    requestsClicent = ReflectTool.dynamicNewObj(requestsConfig.client, requestsConfig)
     requestsClicent.crawlTheSite()
