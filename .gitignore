@@ -101,5 +101,4 @@ ENV/
 .mypy_cache/
 /output
 .idea/
-/www.rddoc.com
-/www.rddoc.com2
+/downloads

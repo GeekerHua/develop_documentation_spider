@@ -9,11 +9,14 @@ import shutil
 from jinja2 import Environment, PackageLoader
 import os, sqlite3
 from config.Config import Config
+import re
 
 class BaseClient(object):
     ENV = Environment(loader=PackageLoader('templates', ''), trim_blocks=True,
                       keep_trailing_newline=True, lstrip_blocks=True)
 
+    DOWNLOAD_DIR = 'downloads'
+    OUTPUT_DIR = 'output'
     def __init__(self, config):
         """
 
@@ -21,15 +24,17 @@ class BaseClient(object):
         """
         self.config = config
         self.url = config.documentUrl if not config.documentUrl.endswith('/') else config.documentUrl[:-1]
-        self.docPath = config.name + '.docset'
-        self.outputPath = './output/'
-        self.resourcesPath = os.path.join(self.outputPath, self.docPath, 'Contents', 'Resources')
-        self.infoPath = os.path.join(self.outputPath, self.docPath, 'Contents', 'Info.plist')
+        self.originDir = self.url.split('//')[-1].split('/')[0]  # 获取域名对应的文件夹名
+        self.docsetDir = config.name + '.docset'
+        self.resourcesPath = os.path.join(self.OUTPUT_DIR, self.docsetDir, 'Contents', 'Resources')
+        self.infoPath = os.path.join(self.OUTPUT_DIR, self.docsetDir, 'Contents', 'Info.plist')
         self.documentsPath = os.path.join(self.resourcesPath, 'Documents')
 
     def crawlTheSite(self):
 
-        self.downloadSite()
+        nativePath = self.downloadSite()
+
+        self.copySiteToDocsets(nativePath, self.resourcesPath)
 
         self.changeSomeText()
 
@@ -41,14 +46,17 @@ class BaseClient(object):
 
     def generateInfoPlist(self):
         # 根据模板生成 Info.list
-        template = self.ENV.get_template('Sphinx.plist')
+        print '4. generate info.plist'
+        template = self.ENV.get_template('info.plist')
         infoTxt = template.render({'bundleIdentifier': self.config.name, 'homePage': self.config.homePage or self.config.indexPage})
         with open(self.infoPath, 'w') as f:
             f.write(infoTxt)
-            print 'already write info.plist'
+            print '4.1. already write info.plist success'
 
     def generateDB(self):
         dbFilePath = os.path.join(self.resourcesPath, 'docSet.dsidx')
+        print '5. generate db path: {path}'.format(path=dbFilePath)
+
         db = sqlite3.connect(dbFilePath)
         cur = db.cursor()
 
@@ -101,21 +109,7 @@ class BaseClient(object):
                 path = '#'.join([fullPath[len(self.documentsPath):], item])
             if not name:
                 continue
-
-            # if self.config.indexPage and fullPath == os.path.join(self.documentsPath, self.config.indexPage):
-            #     tmpPath = self.config.indexPage
-            # elif self.config.homePage and fullPath == os.path.join(self.documentsPath, self.config.homePage):
-            #     tmpPath = self.config.homePage
-            # else:
-            #     tmpPath = ''
             path = self._changeRelativePath(self.documentsPath, fullPath, path)
-            # if path.startswith('../'):
-            #     if len(tmpPath.split('/')) >= 2:
-            #         path = path.replace('..', '/'.join(tmpPath.split('/')[:-2]))
-            # elif not path.startswith('doc'):
-            #     baseDir = '' #'doc/Django-1.10.5'
-            #     # path 需要时从Documents开始的绝对路径，而不能是相对路径
-            #     path = os.path.join(baseDir, path)
             cur.execute('REPLACE INTO searchIndex(name, type, path) VALUES (?,?,?)',
                             (name.decode('utf8'), typeName, path.decode('utf8')))
         if result:
@@ -125,20 +119,46 @@ class BaseClient(object):
         """
         下载整站
         """
-        if os.path.exists(self.resourcesPath):
-            # print '已有这个文件夹name = {name}'.format(name=self.docPath)
-            shutil.rmtree(self.resourcesPath)
+        print '1. start download site from {url} ……'.format(url=self.url)
+        newNativePath = os.path.join(self.DOWNLOAD_DIR, self.config.name)  # 本地保存的路径
+        if os.path.exists(newNativePath):
+            print '1.1. alrady have this path: {path}, skip this step'.format(path=newNativePath)
+            return newNativePath
+
+        # 创建downloads文件夹
+        if not os.path.exists(self.DOWNLOAD_DIR):
+            os.mkdir(self.DOWNLOAD_DIR)
+
+        os.system('cd {download_dir} && wget -r -p -np -q -k {url}'.format(download_dir=self.DOWNLOAD_DIR, url=self.config.documentUrl))
+        print '1.1. download: {path} success'.format(path = newNativePath)
+
+        # 重命名
+        oldNativePath = os.path.join(self.DOWNLOAD_DIR, self.originDir)
+
+        os.rename(oldNativePath, newNativePath)
+        print '1.2. rename folder: {oldName} --> {newName} success'.format(oldName=oldNativePath, newName=newNativePath)
+        return newNativePath
+
+    def copySiteToDocsets(self, nativePath, resourcePath):
+        """
+        将网站内容放到指定docset路径下
+
+        :return:
+        """
+        print '2. copy site to docsets ……'
+        docsetPath = os.path.join(self.OUTPUT_DIR, self.docsetDir)
+        if os.path.exists(docsetPath):
+            print '2.1. already have this path: {path}, remove this path and then copy it'.format(path=docsetPath)
+            shutil.rmtree(docsetPath)
 
         # 创建本地 docset 的文件夹
-        os.makedirs(self.resourcesPath)
-        # 下载整站
-        os.system('cd output && wget -r -p -np -k %s' % self.url)
-
-        # 复制整站到指定的文件夹
-        originDirPath = self.url.split('//')[-1].split('/')[0]
-        shutil.move(os.path.join(self.outputPath, originDirPath), self.resourcesPath)
-
-        os.rename(os.path.join(self.resourcesPath, originDirPath), self.documentsPath)
+        os.makedirs(resourcePath)
+        # 判断是否有原始文件夹
+        if os.path.exists(resourcePath):
+            # 复制整站到指定的文件夹
+            shutil.copytree(nativePath, self.documentsPath)
+            print '2.2 copy folder: {oldPath} --> {newPath} success'.format(oldPath=nativePath, newPath=self.documentsPath)
+            # # shutil.move(oldNativePath, newNativePath)
 
     def _changeRelativePath(self, baseRootPath, basePath, relativePath):
         """
@@ -154,7 +174,9 @@ class BaseClient(object):
         return p.replace(baseRootPath, '')
 
     def changeSomeText(self):
+        print '3. change some text from html'
         pass
 
     def setupIcon(self):
+        print '6. setup icon'
         pass

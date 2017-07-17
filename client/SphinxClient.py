@@ -14,6 +14,7 @@ from BaseClient import BaseClient
 class SphinxClient(BaseClient):
 
     def changeSomeText(self):
+        super(SphinxClient, self).changeSomeText()
         for root, dirs, files in os.walk(self.documentsPath):
             for fileName in files:
                 if fileName.endswith(".html"):

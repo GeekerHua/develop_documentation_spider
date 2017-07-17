@@ -38,7 +38,6 @@ class Config(object):
         self._homePage = None
         self._indexPage = None
         self._theme = None
-
         self.name = None
         self.documentUrl = None
         self.client = 'client.BaseClient'
@@ -58,7 +57,10 @@ class Config(object):
 
     @property
     def homePage(self):
-        return os.path.join('/'.join(self.documentUrl.split('//')[1].split('/')[1:]), self._homePage or 'index.html')
+        if self._homePage:
+            return self._homePage
+        else:
+            return os.path.join('/'.join(self.documentUrl.split('//')[1].split('/')[1:]), self._homePage or 'index.html')
 
     @homePage.setter
     def homePage(self, value):

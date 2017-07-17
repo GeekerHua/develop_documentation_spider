@@ -12,6 +12,7 @@ from BaseClient import BaseClient
 class RdClient(BaseClient):
 
     def changeSomeText(self):
+        super(RdClient, self).changeSomeText()
         for root, dirs, files in os.walk(self.documentsPath):
             for fileName in files:
                 if '?' in fileName:    # 修改文件名，去掉 ?v=xxxx 的样式

@@ -11,7 +11,12 @@ from client.SiteClient import SiteClient
 from client.RdClient import RdClient
 
 if __name__ == '__main__':
-
-    requestsConfig = loadInspectorConfig('config/vender/requests.yaml')
+    # path = 'config/vender/requests.yaml'
+    # path = 'config/vender/jinja2.yaml'
+    # path = 'config/vender/bs4.yaml'
+    # path = 'config/vender/py3.yaml'
+    # path = 'config/vender/vue.yaml'
+    path = 'config/vender/django.yaml'
+    requestsConfig = loadInspectorConfig(path)
     requestsClicent = ReflectTool.dynamicNewObj(requestsConfig.client, requestsConfig)
     requestsClicent.crawlTheSite()
