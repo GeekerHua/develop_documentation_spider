@@ -1,0 +1,5 @@
+name: Fabric
+documentUrl: https://www.rddoc.com/doc/Fabric-1.13.1/
+theme: config.rd.rd
+client: client.RdClient.RdClient
+

@@ -16,7 +16,9 @@ if __name__ == '__main__':
     # path = 'config/vender/bs4.yaml'
     # path = 'config/vender/py3.yaml'
     # path = 'config/vender/vue.yaml'
-    path = 'config/vender/django.yaml'
+    # path = 'config/vender/django.yaml'
+    # path = 'config/vender/tornado.yaml'
+    path = 'config/vender/scrapy.yaml'
     requestsConfig = loadInspectorConfig(path)
     requestsClicent = ReflectTool.dynamicNewObj(requestsConfig.client, requestsConfig)
     requestsClicent.crawlTheSite()

@@ -1,6 +1,6 @@
 name: py3
 indexPage: contents/index.html
 documentUrl: https://www.rddoc.com/doc/Python-3.6.0/
-theme: config.rd.py3
+theme: config.rd.rd
 client: client.RdClient.RdClient
 

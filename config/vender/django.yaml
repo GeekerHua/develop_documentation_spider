@@ -1,5 +1,5 @@
 name: django
 documentUrl: https://www.rddoc.com/doc/Django-1.10.5/
-theme: config.rd.py3
+theme: config.rd.rd
 client: client.RdClient.RdClient
 

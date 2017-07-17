@@ -1,0 +1,5 @@
+name: scrapy
+documentUrl: https://www.rddoc.com/doc/Scrapy-1.3/
+theme: config.rd.rd
+client: client.RdClient.RdClient
+
