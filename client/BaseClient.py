@@ -9,7 +9,6 @@ import shutil
 from jinja2 import Environment, PackageLoader
 import os, sqlite3
 from config.Config import Config
-import re
 
 class BaseClient(object):
     ENV = Environment(loader=PackageLoader('templates', ''), trim_blocks=True,
@@ -158,7 +157,6 @@ class BaseClient(object):
             # 复制整站到指定的文件夹
             shutil.copytree(nativePath, self.documentsPath)
             print '2.2 copy folder: {oldPath} --> {newPath} success'.format(oldPath=nativePath, newPath=self.documentsPath)
-            # # shutil.move(oldNativePath, newNativePath)
 
     def _changeRelativePath(self, baseRootPath, basePath, relativePath):
         """
